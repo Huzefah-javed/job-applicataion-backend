@@ -3,6 +3,8 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { dbConnect } from "./config/db.connect.config.js";
 import ChatRoom from "./schemas/chatRoom.schema.js";
+import { configDotenv } from "dotenv";
+import { MessageAction } from "./db/message.action.js";
 
 const app = express();
 
@@ -15,6 +17,8 @@ const io = new Server(server, {
   },
 });
 
+configDotenv();
+
 io.on("connect", (socket) => {
   console.log("connected successfully");
 
@@ -24,14 +28,36 @@ io.on("connect", (socket) => {
     });
 
     chats.forEach((chat) => socket.join(chat.roomId.toString()));
-    console.log("every room connected  for ", userId);
   });
 
-  socket.on("sendMsg", ({ roomId, message, senderId }) => {
-    console.log({ roomId, message, senderId });
-
-    socket.to(roomId).emit("receiveMsg", { message, roomId, senderId });
+  socket.on("OnlineNotifyToAll", (roomIds) => {
+    console.log("Online notify here ", roomIds);
+    roomIds.forEach((roomId) => {
+      socket.to(roomId).emit("onlineUserDetected", roomId);
+    });
   });
+
+  socket.on("onlineStatusSend", (roomId) =>
+    socket.to(roomId).emit("onlineStatusReceive", roomId),
+  );
+
+  socket.on(
+    "sendMsg",
+    async ({
+      chatId,
+      roomId,
+      message,
+      messageType,
+      offerMessage,
+      senderId,
+    }) => {
+      console.log({ roomId, message, senderId });
+      let msg = messageType === "offer" ? offerMessage : message;
+      await MessageAction(chatId, msg, messageType, senderId);
+
+      io.to(roomId).emit("receiveMsg", { message, roomId, senderId });
+    },
+  );
 });
 
 app.get("/", (req, res) => {
