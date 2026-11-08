@@ -31,7 +31,6 @@ io.on("connect", (socket) => {
   });
 
   socket.on("OnlineNotifyToAll", (roomIds) => {
-    console.log("Online notify here ", roomIds);
     roomIds.forEach((roomId) => {
       socket.to(roomId).emit("onlineUserDetected", roomId);
     });
@@ -40,6 +39,12 @@ io.on("connect", (socket) => {
   socket.on("onlineStatusSend", (roomId) =>
     socket.to(roomId).emit("onlineStatusReceive", roomId),
   );
+
+  socket.on("OfflineNotifyToAll", (roomIds) => {
+    roomIds.forEach((roomId) => {
+      socket.to(roomId).emit("offlineUserDetected", roomId);
+    });
+  });
 
   socket.on(
     "sendMsg",
@@ -51,11 +56,17 @@ io.on("connect", (socket) => {
       offerMessage,
       senderId,
     }) => {
-      console.log({ roomId, message, senderId });
       let msg = messageType === "offer" ? offerMessage : message;
-      await MessageAction(chatId, msg, messageType, senderId);
+      const res = await MessageAction(chatId, msg, messageType, senderId);
 
-      io.to(roomId).emit("receiveMsg", { message, roomId, senderId });
+      io.to(roomId).emit("receiveMsg", {
+        message,
+        roomId,
+        offerMessage,
+        messageType,
+        senderId,
+        _id: res.msgId,
+      });
     },
   );
 });
