@@ -46,6 +46,10 @@ io.on("connect", (socket) => {
     });
   });
 
+  socket.on("offerAction", ({ chatId, msgId, action }) => {
+    socket.emit("offerAction", { chatId, msgId, action });
+  });
+
   socket.on(
     "sendMsg",
     async ({

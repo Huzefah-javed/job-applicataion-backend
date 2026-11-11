@@ -40,33 +40,10 @@ const proposalSchema = new mongoose.Schema(
       ],
       default: [],
     },
-    status: {
-      type: String,
-      enum: {
-        values: ["pending", "accepted", "rejected", "withdrawn"],
-        message: "Invalid proposal status: {VALUE}",
-      },
-      default: "pending",
-      index: true,
-    },
-
-    rejectionReason: {
-      type: String,
-      trim: true,
+    escrowId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Escrow",
       default: null,
-    },
-    nextUrl: {
-      type: String,
-      default: null,
-    },
-    transactionId: {
-      type: String,
-      default: null,
-    },
-    escrowStatus: {
-      type: String,
-      enum: ["not_initiated", "termsPending", "accepted"],
-      default: "not_initiated",
     },
   },
   {
